@@ -135,7 +135,7 @@ sys_getprocs(void)
     return -1;
   }
 
-  // Neccesary external variables, wait_lock and proccess list
+  // Neccesary external variables, wait_lock and process list
   extern struct spinlock wait_lock;
   extern struct proc proc[NPROC];
 
@@ -146,13 +146,13 @@ sys_getprocs(void)
   // Acquiring lock as stating in proc.c
   acquire(&wait_lock);
 
-  // Loop once for each proccess
+  // Loop once for each process
   for(int i = 0; i < NPROC; i++) {
-    // Getting proccess from list and acquiring its lock
+    // Getting process from list and acquiring its lock
     p = &proc[i];
     acquire(&p->lock);
 
-    // Only return proccess to user space if it is not unused, and do not return more that requested
+    // Only return process to user space if it is not unused, and do not return more that requested
     if(p->state != UNUSED && count < max_procs) {
       // Offsetting pinfo pointer
       uint64 addr = pinfo_addr + count*sizeof(struct procinfo);
@@ -165,7 +165,7 @@ sys_getprocs(void)
         release(&p->parent->lock);
       }
 
-      // Copy data from proccess table to user space, and more error handling to ensure that the address passed by the user is valid
+      // Copy data from process table to user space, and more error handling to ensure that the address passed by the user is valid
       if(copyout(myp->pagetable, addr+offsetof(struct procinfo, pid), (char *)&p->pid, sizeof(int)) < 0 || 
          copyout(myp->pagetable, addr+offsetof(struct procinfo, ppid), (char *)&ppid, sizeof(int)) < 0 || 
          copyout(myp->pagetable, addr+offsetof(struct procinfo, state), (char *)&p->state, sizeof(int)) < 0 || 
@@ -180,7 +180,7 @@ sys_getprocs(void)
 
     release(&p->lock);
 
-    // Exit loop early if the max_procs proccesses have been added to pinfo
+    // Exit loop early if the max_procs processes have been added to pinfo
     if(count >= max_procs) {
       break;
     }

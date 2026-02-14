@@ -3,6 +3,7 @@
 #include "user/user.h"
 #include "kernel/param.h"
 
+// Prints n spaces
 void
 printspaces(int n)
 {
@@ -11,6 +12,7 @@ printspaces(int n)
     }
 }
 
+// Returns the length of a number
 int
 numlen(int n)
 {
@@ -30,9 +32,13 @@ numlen(int n)
 int
 main(int argc, char *argv[])
 {
+    // Array used to decode the state enum
+    static const char *statelookup[] = { "UNUSED", "USED", "SLEEPING", "RUNNABLE", "RUNNING", "ZOMBIE" };
+
     int max_procs;
     struct procinfo pinfo[NPROC];
 
+    // sets max_procs to either the first command line input, or NPROC if there are none
     if(argc > 1) {
         max_procs = atoi(argv[1]);
     }
@@ -40,30 +46,31 @@ main(int argc, char *argv[])
         max_procs = NPROC;
     }
 
+    // Using the system cal
     int procs;
-
     procs = getprocs(pinfo, max_procs);
 
-    enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+    if(procs < 0){
+        printf("getprocs error\n");
+    }
+    else {
+        printf("PID    PPID   STATE      SIZE       NAME\n");
+        for (int i = 0; i < procs; i++) {
+            // printspaces() is used to ensure fixed width columns
+            printf("%d", pinfo[i].pid);
+            printspaces(7 - numlen(pinfo[i].pid));
 
-    static const char *statelookup[] = { "UNUSED", "USED", "SLEEPING", "RUNNABLE", "RUNNING", "ZOMBIE" };
+            printf("%d", pinfo[i].ppid);
+            printspaces(7 - numlen(pinfo[i].ppid));
 
-    printf("PID    PPID   STATE      SIZE       NAME\n");
+            printf("%s", statelookup[pinfo[i].state]);
+            printspaces(11 - strlen(statelookup[pinfo[i].state]));
 
-    for (int i = 0; i < procs; i++) {
-        printf("%d", pinfo[i].pid);
-        printspaces(7 - numlen(pinfo[i].pid));
+            printf("%lu", pinfo[i].sz);
+            printspaces(11 - numlen(pinfo[i].sz));
 
-        printf("%d", pinfo[i].ppid);
-        printspaces(7 - numlen(pinfo[i].ppid));
+            printf("%s\n", pinfo[i].name);
 
-        printf("%s", statelookup[pinfo[i].state]);
-        printspaces(11 - strlen(statelookup[pinfo[i].state]));
-
-        printf("%lu", pinfo[i].sz);
-        printspaces(11 - numlen(pinfo[i].sz));
-
-        printf("%s\n", pinfo[i].name);
-
+        }
     }
 }

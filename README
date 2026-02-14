@@ -1,3 +1,12 @@
+This is a copy of the xv6 operating system that was provided to me by 
+my professor, Hamzeh Khazaei for use in EECS 3221. 
+
+I have modified it to add a system call called getprocs() that returns
+info about currently running processes. I also added a user space
+program, ps.c, that utilizes this system call. 
+
+Below is the original README:
+
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,
 but is implemented for a modern RISC-V multiprocessor using ANSI C.
