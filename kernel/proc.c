@@ -124,6 +124,9 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  p->base_priority = 5;
+  p->priority = 5;
+  p->wait_time = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -169,6 +172,9 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->priority = 5;
+  p->base_priority = 5;
+  p->wait_time = 0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -275,6 +281,9 @@ kfork(void)
     return -1;
   }
   np->sz = p->sz;
+  np->priority = p->priority;
+  np->base_priority = p->base_priority;
+  np->wait_time = 0;
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
@@ -437,24 +446,53 @@ scheduler(void)
     intr_on();
     intr_off();
 
+    for(p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if(p->state == RUNNABLE){
+        p->wait_time++;
+        //printf("pid %d wait_time %d priority %d\n", p->pid, p->wait_time, p->priority);
+        if(p->wait_time >= 10 && p->priority < 10){
+          p->priority++;
+          p->wait_time = 0;
+        }
+      }
+      release(&p->lock); 
+    }
+
+    struct proc *highp = 0;
+    int maxprio = -1;
+
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-        found = 1;
+      if((p->state == RUNNABLE) && (p->priority > maxprio)) {
+        maxprio = p->priority;
+        highp = p;
       }
       release(&p->lock);
     }
+
+    if(highp != 0){
+      acquire(&highp->lock);
+      if(highp->state == RUNNABLE){
+        
+        // Switch to chosen process.  It is the process's job
+        // to release its lock and then reacquire it
+        // before jumping back to us.
+        highp->state = RUNNING;
+        c->proc = highp;
+        swtch(&c->context, &highp->context);
+        
+        highp->priority = highp->base_priority;
+        highp->wait_time = 0;
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.  
+        c->proc = 0;
+        found = 1;
+      }
+      release(&highp->lock);
+    }
+ 
     if(found == 0) {
       // nothing to run; stop running on this core until an interrupt.
       asm volatile("wfi");

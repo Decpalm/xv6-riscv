@@ -190,3 +190,69 @@ sys_getprocs(void)
 
   return count;
 }
+
+uint64
+sys_setpriority(void)
+{
+  extern struct proc proc[NPROC];
+  extern struct spinlock wait_lock;
+
+  int pid;
+  int priority;
+
+  argint(0, &pid);
+  argint(1, &priority);
+
+  struct proc *p;
+  int found = -1; // default return value if process is not found or is unused
+
+  if(priority < 0 || priority > 10){
+    return -1;
+  }
+
+  acquire(&wait_lock);
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->pid == pid){
+      p->priority = priority;
+      p->base_priority = priority;
+      found = 0;
+    }
+    release(&p->lock);
+  }
+  release(&wait_lock);
+  return found;
+}
+
+uint64
+sys_getpriority(void)
+{
+  extern struct proc proc[NPROC];
+  extern struct spinlock wait_lock;
+
+  int pid;
+
+  argint(0, &pid);
+
+  struct proc *p;
+  int priority = -1; //default priority if process is not found or is unused
+
+  acquire(&wait_lock);
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->pid == pid){
+      priority = p->priority;
+    }
+    release(&p->lock);
+  }
+  release(&wait_lock);
+
+  return priority;
+}
+
+uint64
+sys_yield(void)
+{
+  yield();
+  return 0;
+}

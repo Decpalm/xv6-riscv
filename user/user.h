@@ -26,6 +26,9 @@ char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
 int getprocs(struct procinfo *pinfo, int max_procs);
+int setpriority(int pid, int priority);
+int getpriority(int pid);
+int yield(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
