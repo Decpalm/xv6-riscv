@@ -25,7 +25,6 @@ main(int argc, char *argv[])
       }
       // Add some yielding to allow other processes to show aging
       if(i % 50000 == 0) {
-        //printf("Child 1 (High Priority): Yielding CPU at iteration %d\n", i);
         yield();
       }
     }
@@ -45,7 +44,6 @@ main(int argc, char *argv[])
                i, getpriority(getpid()));
       }
       if(i % 50000 == 0) {
-        //printf("Child 2 (Medium Priority): Yielding CPU at iteration %d\n", i);
         yield();
       }
     }
