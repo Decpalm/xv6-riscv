@@ -5,6 +5,12 @@ I have modified it to add a system call called getprocs() that returns
 info about currently running processes. I also added a user space
 program, ps.c, that utilizes this system call. 
 
+I have also added priority based scheduling, with buily in aging to
+prevent process starvation. I also added system call to get and set
+a processes priority and a system call that allows a proccess to yield 
+back to the scheduler. I also added a user space program used to test
+the new scheduler. 
+
 Below is the original README:
 
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
